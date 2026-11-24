@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wayfare — Dashboard preview</title>
+  <link rel="stylesheet" href="/previews/preview.css">
+  <script src="/previews/preview.js" defer></script>
+</head>
+<body>
+  <div class="preview-strip"><b>●</b> Design preview · Sample data <span class="preview-extra">· Buttons demonstrate interactions only</span></div>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="/previews/dashboard.html" aria-label="Wayfare preview home"><span class="brand-mark">✧</span>wayfare<b>.</b></a>
+      <nav class="main-nav" aria-label="Main"><a href="/previews/dashboard.html" aria-current="page">Trips</a><a href="/previews/trip.html">Activity</a></nav>
+      <div class="header-right"><span class="hello">Good morning, Sahil</span><span class="avatar">SR</span></div>
+    </div>
+  </header>
+  <main class="page">
+    <section class="home-hero" aria-labelledby="hero-title">
+      <div class="hero-content reveal"><span class="eyebrow">The best part of a trip is the trip</span><h1 id="hero-title" class="serif">Go together.<br><span>Settle simply.</span></h1><p>Every shared cab, coffee and last-minute detour in one clear place. You make the memories. We’ll handle the maths.</p><button type="button" class="button button-coral" data-dialog="create-trip">Plan a new trip <span aria-hidden="true">↗</span></button></div>
+      <svg class="hero-map" viewBox="0 0 540 330" role="img" aria-label="Illustrated route between destinations">
+        <path class="route-halo" d="M80 270 C155 245 125 142 226 155 S340 235 401 94 S480 75 500 49"/>
+        <path class="route" d="M80 270 C155 245 125 142 226 155 S340 235 401 94 S480 75 500 49"/>
+        <circle class="pin one" cx="80" cy="270" r="9"/><circle class="pin two" cx="226" cy="155" r="9"/><circle class="pin three" cx="401" cy="94" r="9"/>
+        <text class="map-label" x="52" y="300">GOA</text><text class="map-label" x="196" y="137">JAIPUR</text><text class="map-label" x="375" y="74">UDAIPUR</text>
+      </svg>
+      <span class="hero-note">THE GOOD KIND OF DETOUR / 2026</span>
+    </section>
+
+    <div class="section-top reveal delay-1"><div><p class="eyebrow">Your shared journeys</p><h2 class="serif">Trips in your orbit</h2></div><a class="text-link" href="/previews/trip.html">View recent activity <span aria-hidden="true">→</span></a></div>
+    <div class="dashboard-grid">
+      <section aria-label="Trips">
+        <a class="trip-card active-trip soft-panel reveal delay-2" href="/previews/trip.html"><div class="top-line"><span class="status status-open">In progress</span><div class="avatar-stack" aria-label="Four friends"><span>SR</span><span>AR</span><span>MR</span><span>NH</span></div></div><div><h3>Goa long weekend</h3><p>12–16 November · 4 friends · 7 expenses</p></div><div class="bottom-line"><div><small>Total trip spend</small><strong>₹31,800</strong></div><span class="arrow-circle" aria-hidden="true">↗</span></div></a>
+        <a class="trip-card closed-trip soft-panel reveal delay-3" href="/previews/trip.html"><div class="top-line"><span class="status status-closed">Ready to settle</span><div class="avatar-stack" aria-label="Three friends"><span>SR</span><span>RY</span><span>KN</span></div></div><div><h3>Udaipur city break</h3><p>29 October – 1 November · 3 friends · 5 expenses</p></div><div class="bottom-line"><div><small>Total trip spend</small><strong>₹17,550</strong></div><span class="arrow-circle" aria-hidden="true">↗</span></div></a>
+      </section>
+      <aside class="reveal delay-4" aria-label="Trip at a glance">
+        <div class="note-card"><div><svg class="mini-compass" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="22" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="m33 19-5 10-9 4 5-10 9-4Z" fill="currentColor"/></svg><h3 class="serif">Nothing to chase but the horizon.</h3></div><p>Keep the spending clear, so the group can focus on what’s next.</p></div>
+        <div class="stats-mini"><div class="stat-mini soft-panel"><span class="eyebrow">Travelling with</span><strong>06</strong><small>friends across trips</small></div><div class="stat-mini soft-panel"><span class="eyebrow">Shared so far</span><strong>₹49k</strong><small>good memories, clearer bills</small></div></div>
+      </aside>
+    </div>
+  </main>
+  <dialog id="create-trip" class="demo-dialog"><form method="dialog"><span class="eyebrow">Preview interaction</span><h2 class="serif">Start somewhere new</h2><p>This is a visual preview. Creating a trip here won’t change your account.</p><label>Trip name<input placeholder="e.g. Monsoon in Coorg" required></label><div class="dialog-actions"><button class="button button-outline" value="cancel" formnovalidate>Cancel</button><button class="button button-coral" value="demo-created" data-toast="Trip creation previewed">Create trip</button></div></form></dialog>
+  <div class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

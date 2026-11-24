@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "Wayfare",
+    "slug": "wayfare",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "wayfare",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.wayfare.trips",
+      "versionCode": 1,
+      "permissions": ["ACCESS_COARSE_LOCATION"],
+      "blockedPermissions": [
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.VIBRATE"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#173D3A",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-sqlite",
+      "expo-status-bar",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Wayfare uses your approximate location only when you choose to attach it to an expense.",
+          "isIosReducedAccuracyByDefault": true,
+          "locationFullAccuracyPermission": false
+        }
+      ]
+    ]
+  }
+}
