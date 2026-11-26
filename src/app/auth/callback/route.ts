@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { safeNext } from "@/lib/redirects";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
   const tokenHash = request.nextUrl.searchParams.get("token_hash");
   const type = request.nextUrl.searchParams.get("type");
   const next = request.nextUrl.searchParams.get("next");
-  const destination = next?.startsWith("/join/") ? next : "/";
+  const destination = safeNext(next);
   const db = await supabase();
 
   let error: Error | null = null;

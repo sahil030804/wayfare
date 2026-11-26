@@ -14,9 +14,9 @@ type Pay = Payment & { id: string; created_at: string };
 const dateLabel = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" });
 function mapUrl(lat: number | null, lng: number | null) {
   if (lat == null || lng == null || !Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))) return null;
-  const a = Number(lat), b = Number(lng);
-  if (a < -90 || a > 90 || b < -180 || b > 180) return null;
-  return `https://www.openstreetmap.org/?mlat=${a}&mlon=${b}#map=16/${a}/${b}`;
+  const latitude = Number(lat), longitude = Number(lng);
+  if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) return null;
+  return `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=16/${latitude}/${longitude}`;
 }
 
 export default async function TripPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ error?: string; invite?: string; token?: string; edit?: string; connected?: string }> }) {
