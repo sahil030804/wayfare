@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { balances, splitEvenly, transfers, parsePaise } from "../src/lib/money.ts";
+import { balances, splitEvenly, transfers, parsePaise, settlementAmount } from "../src/lib/money.ts";
 
 test("one-friend purchase excludes payer", () => {
   const expenses = [{ amount_paise: 12501, payer_member_id: "a", expense_shares: splitEvenly(12501, ["b"]) }];
@@ -37,4 +37,12 @@ test("amount parsing rejects sub-paise and zero", () => {
   assert.equal(parsePaise("1.05"), 105);
   assert.throws(() => parsePaise("1.001"));
   assert.throws(() => parsePaise("0"));
+});
+
+test("settlement amount matches the full transfer between two members", () => {
+  const expenses = [{ amount_paise: 1000, payer_member_id: "a", expense_shares: splitEvenly(1000, ["b", "c"]) }];
+  const balance = balances(["a", "b", "c"], expenses, []);
+  assert.equal(settlementAmount(balance, "b", "a"), 500);
+  assert.equal(settlementAmount(balance, "c", "a"), 500);
+  assert.equal(settlementAmount(balance, "a", "b"), null);
 });

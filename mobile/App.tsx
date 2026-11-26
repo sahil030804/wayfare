@@ -395,7 +395,7 @@ export default function App() {
         ) : !user ? (
           <Login />
         ) : !profile ? (
-          <ProfileForm user={user} busy={busy} run={run} saved={loadProfile} />
+          <ProfileForm key={`${user.id}:new`} user={user} busy={busy} run={run} saved={loadProfile} />
         ) : page.name === "home" ? (
           <Home
             profile={profile}
@@ -412,6 +412,7 @@ export default function App() {
           />
         ) : page.name === "profile" ? (
           <ProfileForm
+            key={`${user.id}:saved`}
             user={user}
             profile={profile}
             busy={busy}
@@ -480,7 +481,7 @@ function Login() {
     }
   };
   const verify = async () => {
-    if (!/^\d{6,8}$/.test(code.trim()))
+    if (!/^\d{6,10}$/.test(code.trim()))
       return Alert.alert("Code", "Enter the code from your latest email.");
     setBusy(true);
     const { error } = await supabase.auth.verifyOtp({
@@ -524,9 +525,9 @@ function Login() {
             label="One-time code"
             value={code}
             set={setCode}
-            placeholder="6-digit code"
+            placeholder="6–10 digit code"
             keyboardType="number-pad"
-            maxLength={8}
+            maxLength={10}
           />
         )}
         <Btn
@@ -1207,8 +1208,8 @@ function ExpenseForm({
       const p = await Location.getPosition({ maxCachedAge: 0, timeout: 20 });
       if (!p) throw new Error("No location fix available.");
       setLocation({
-        lat: Math.round(p.coordinates.latitude * 100) / 100,
-        lng: Math.round(p.coordinates.longitude * 100) / 100,
+        lat: Math.round(p.coordinates.latitude * 10000) / 10000,
+        lng: Math.round(p.coordinates.longitude * 10000) / 10000,
       });
     } catch (e) {
       Alert.alert("Location unavailable", errorText(e));

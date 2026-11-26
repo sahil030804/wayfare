@@ -4,10 +4,18 @@ import { createHash, randomBytes } from "node:crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase";
-import { parsePaise } from "@/lib/money";
+import { balances, parsePaise, settlementAmount, type Expense, type Payment } from "@/lib/money";
+import { isSafeNext, safeNext, withParam } from "@/lib/redirects";
+import { isValidEmail, isValidUpi } from "@/lib/validators";
 
 const str = (f: FormData, key: string) => String(f.get(key) ?? "").trim();
-const fail = (message: string, back: string) => redirect(`${back}${back.includes("?") ? "&" : "?"}error=${encodeURIComponent(message)}`);
+const fail = (message: string, back: string) => redirect(withParam(back, "error", message));
+function loginUrl(email: string, next: string, extra: Record<string, string> = {}) {
+  let url = "/login";
+  for (const [key, value] of Object.entries(extra)) url = withParam(url, key, value);
+  url = withParam(url, "email", email);
+  return isSafeNext(next) ? withParam(url, "next", next) : url;
+}
 async function client() {
   const db = await supabase();
   const { data: { user } } = await db.auth.getUser();
@@ -18,8 +26,8 @@ async function client() {
 export async function sendCode(form: FormData) {
   const email = str(form, "email").toLowerCase();
   const next = str(form, "next");
-  const back = `/login?email=${encodeURIComponent(email)}${(next.startsWith("/join/") || next === "/delete-account") ? `&next=${encodeURIComponent(next)}` : ""}`;
-  if (!/^\S+@\S+\.\S+$/.test(email)) fail("Enter a valid email", back);
+  const back = loginUrl(email, next);
+  if (!isValidEmail(email)) fail("Enter a valid email", back);
   const db = await supabase();
   const { error } = await db.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
   if (error) {
@@ -30,15 +38,15 @@ export async function sendCode(form: FormData) {
     if (error.code === "email_address_not_authorized") fail("This project cannot send to that address yet. The app owner needs to configure custom SMTP.", back);
     fail(error.message, back);
   }
-  redirect(`/login?email=${encodeURIComponent(email)}&sent=1${(next.startsWith("/join/") || next === "/delete-account") ? `&next=${encodeURIComponent(next)}` : ""}`);
+  redirect(loginUrl(email, next, { sent: "1" }));
 }
 
 export async function verifyCode(form: FormData) {
   const email = str(form, "email").toLowerCase();
   const token = str(form, "token").replace(/\s/g, "");
   const next = str(form, "next");
-  const back = `/login?sent=1&email=${encodeURIComponent(email)}${(next.startsWith("/join/") || next === "/delete-account") ? `&next=${encodeURIComponent(next)}` : ""}`;
-  if (!/^\S+@\S+\.\S+$/.test(email) || !/^\d{6,10}$/.test(token)) fail("Enter the full code from your email (6–10 digits).", back);
+  const back = loginUrl(email, next, { sent: "1" });
+  if (!isValidEmail(email) || !/^\d{6,10}$/.test(token)) fail("Enter the full code from your email (6–10 digits).", back);
   const db = await supabase();
   const { error } = await db.auth.verifyOtp({ email, token, type: "email" });
   if (error) {
@@ -46,7 +54,7 @@ export async function verifyCode(form: FormData) {
     if (error.code === "over_request_rate_limit") fail("Too many code attempts. Wait a few minutes before trying again.", back);
     fail(error.message, back);
   }
-  redirect((next.startsWith("/join/") || next === "/delete-account") ? next : "/");
+  redirect(safeNext(next));
 }
 
 export async function signOut() {
@@ -60,12 +68,12 @@ export async function saveProfile(form: FormData) {
   const display_name = str(form, "display_name");
   const upi_id = str(form, "upi_id") || null;
   if (display_name.length < 1 || display_name.length > 80) fail("Enter your name", "/profile");
-  if (upi_id && !/^[A-Za-z0-9._-]{2,100}@[A-Za-z0-9.-]{2,100}$/.test(upi_id)) fail("Enter a valid UPI ID", "/profile");
+  if (upi_id && !isValidUpi(upi_id)) fail("Enter a valid UPI ID", "/profile");
   const { error } = await db.from("profiles").upsert({ id: user.id, email: user.email!, display_name, upi_id });
   if (error) fail(error.message, "/profile");
   revalidatePath("/");
   const next = str(form, "next");
-  redirect((next.startsWith("/join/") || next === "/delete-account") ? next : "/");
+  redirect(safeNext(next));
 }
 
 export async function createTrip(form: FormData) {
@@ -84,7 +92,7 @@ export async function connectFriend(form: FormData) {
   const email = str(form, "email").toLowerCase();
   const member = str(form, "member") || null;
   if (!/^[0-9a-f-]{36}$/i.test(trip) || (member && !/^[0-9a-f-]{36}$/i.test(member))) fail("Invalid trip member", "/");
-  if (email.length > 254 || !/^\S+@\S+\.\S+$/.test(email)) fail("Enter a valid email", `/trips/${trip}`);
+  if (email.length > 254 || !isValidEmail(email)) fail("Enter a valid email", `/trips/${trip}`);
   const { error } = await db.rpc("connect_friend", { p_trip: trip, p_email: email, p_member: member });
   if (error?.code === "PGRST202") fail("Database update needed. Run supabase/migrations/20261124_existing_account_friends.sql in the SQL Editor.", `/trips/${trip}`);
   if (error) fail(error.message, `/trips/${trip}`);
@@ -152,11 +160,30 @@ export async function closeTrip(form: FormData) {
 }
 
 export async function sendPayment(form: FormData) {
-  const { db } = await client();
+  const { db, user } = await client();
   const trip = str(form, "trip");
-  const { error } = await db.rpc("send_payment", { p_trip: trip, p_from: str(form, "from"), p_to: str(form, "to"), p_amount: Number(str(form, "amount")) });
-  if (error) fail(error.message, `/trips/${trip}`);
-  revalidatePath(`/trips/${trip}`);
+  const from = str(form, "from");
+  const to = str(form, "to");
+  const back = `/trips/${trip}`;
+  const amount = Number(str(form, "amount"));
+  if (!Number.isSafeInteger(amount) || amount <= 0) fail("Invalid payment amount", back);
+  const [members, expenses, payments] = await Promise.all([
+    db.from("members").select("id,user_id").eq("trip_id", trip),
+    db.from("expenses").select("amount_paise,payer_member_id,expense_shares(member_id,amount_paise)").eq("trip_id", trip),
+    db.from("payments").select("from_member_id,to_member_id,amount_paise,status").eq("trip_id", trip),
+  ]);
+  if (members.error || expenses.error || payments.error) fail("Could not verify the current balance", back);
+  const payer = (members.data ?? []).find(m => m.id === from && m.user_id === user.id);
+  if (!payer) fail("Not allowed", back);
+  const balance = balances(
+    (members.data ?? []).map(m => m.id),
+    (expenses.data ?? []) as Expense[],
+    (payments.data ?? []) as Payment[],
+  );
+  if (settlementAmount(balance, from, to) !== amount) fail("Report the full amount shown for this transfer", back);
+  const { error } = await db.rpc("send_payment", { p_trip: trip, p_from: from, p_to: to, p_amount: amount });
+  if (error) fail(error.message, back);
+  revalidatePath(back);
 }
 
 export async function resolvePayment(form: FormData) {

@@ -39,6 +39,11 @@ export function transfers(balance: Map<string, number>): Transfer[] {
   return result;
 }
 
+/** The full amount currently owed from one member to another, if any. */
+export function settlementAmount(balance: Map<string, number>, from: string, to: string): number | null {
+  return transfers(balance).find(t => t.from === from && t.to === to)?.amount ?? null;
+}
+
 export const rupees = (paise: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(paise / 100);
 
 export function parsePaise(value: string) {

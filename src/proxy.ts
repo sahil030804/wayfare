@@ -10,10 +10,12 @@ export async function proxy(request: NextRequest) {
   const db = createServerClient(url, key, {
     cookies: {
       getAll() { return request.cookies.getAll(); },
-      setAll(items) {
+      setAll(items, headers) {
         items.forEach(({ name, value }) => request.cookies.set(name, value));
         response = NextResponse.next({ request });
         items.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+        // Auth responses must never be cached or shared between users.
+        Object.entries(headers).forEach(([key, value]) => response.headers.set(key, value));
       },
     },
   });
